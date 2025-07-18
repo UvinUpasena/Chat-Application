@@ -9,85 +9,51 @@ class AuthService {
   // Get current user
   User? get currentUser => _auth.currentUser;
 
-  // Sign up with email and password
-  Future<UserModel?> signUpWithEmailAndPassword({
-    required String name,
-    required String email,
-    required String password,
-  }) async {
-    try {
-      UserCredential result = await _auth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-
-      User? user = result.user;
-      if (user != null) {
-        // Create user model
-        UserModel userModel = UserModel(
-          uid: user.uid,
-          name: name,
-          email: email,
-          photoUrl: '',
-          lastSeen: DateTime.now().toString(),
-        );
-
-        // Add user to firestore
-        await _firestore.collection('users').doc(user.uid).set(userModel.toMap());
-
-        return userModel;
-      }
-    } catch (e) {
-      print(e.toString());
-      return null;
-    }
-    return null;
+  // Create Firebase Auth account
+  Future<User?> createUser(String email, String password) async {
+    UserCredential result = await _auth.createUserWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+    return result.user;
   }
 
-  // Sign in with email and password
-  Future<UserModel?> signInWithEmailAndPassword({
-    required String email,
-    required String password,
-  }) async {
-    try {
-      UserCredential result = await _auth.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+  // Save user model to Firestore
+  Future<void> saveUserToFirestore(UserModel user) async {
+    await _firestore.collection('users').doc(user.uid).set(user.toMap());
+  }
 
-      User? user = result.user;
-      if (user != null) {
-        // Get user data from firestore
-        DocumentSnapshot doc =
-            await _firestore.collection('users').doc(user.uid).get();
+  // Sign in user
+  Future<User?> signIn(String email, String password) async {
+    UserCredential result = await _auth.signInWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+    return result.user;
+  }
 
-        return UserModel.fromMap(doc.data() as Map<String, dynamic>);
-      }
-    } catch (e) {
-      print(e.toString());
-      return null;
+  // Get user model by UID from Firestore
+  Future<UserModel?> getUserById(String uid) async {
+    final doc = await _firestore.collection('users').doc(uid).get();
+    if (doc.exists) {
+      return UserModel.fromMap(doc.data() as Map<String, dynamic>);
     }
     return null;
   }
 
   // Sign out
   Future<void> signOut() async {
-    try {
-      await _auth.signOut();
-    } catch (e) {
-      print(e.toString());
-    }
+    await _auth.signOut();
   }
 
-  // Update user online status
+  // Update online status
   Future<void> updateUserStatus(bool isOnline) async {
-    try {
-      await _firestore.collection('users').doc(currentUser?.uid).update({
+    final uid = currentUser?.uid;
+    if (uid != null) {
+      await _firestore.collection('users').doc(uid).update({
         'isOnline': isOnline,
-        'lastSeen': DateTime.now().toString(),
+        'lastSeen': DateTime.now().toIso8601String(),
       });
-    } catch (e) {
-      print(e.toString());
     }
   }
 }

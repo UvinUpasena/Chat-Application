@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../services/auth_service.dart';
+import '../controllers/auth_controller.dart';
+import '../models/user_model.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -12,7 +13,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _authService = AuthService();
+  final _authController = AuthController();
   bool _isLoading = false;
 
   @override
@@ -26,7 +27,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
 
-      final user = await _authService.signInWithEmailAndPassword(
+      final UserModel? user = await _authController.loginUser(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
@@ -66,12 +67,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     labelText: 'Email',
                     border: OutlineInputBorder(),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your email';
-                    }
-                    return null;
-                  },
+                  validator: (value) =>
+                  value == null || value.isEmpty ? 'Enter email' : null,
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
@@ -81,12 +78,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     labelText: 'Password',
                     border: OutlineInputBorder(),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter your password';
-                    }
-                    return null;
-                  },
+                  validator: (value) =>
+                  value == null || value.isEmpty ? 'Enter password' : null,
                 ),
                 const SizedBox(height: 24),
                 SizedBox(
@@ -101,9 +94,8 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 16),
                 TextButton(
-                  onPressed: () =>
-                      Navigator.pushReplacementNamed(context, '/register'),
-                  child: const Text('Don\'t have an account? Register'),
+                  onPressed: () => Navigator.pushReplacementNamed(context, '/register'),
+                  child: const Text("Don't have an account? Register"),
                 ),
               ],
             ),
